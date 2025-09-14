@@ -436,7 +436,7 @@ const sigCtx = sigCanvas.getContext("2d");
 let drawing = false;
 let scaleX = 1, scaleY = 1;
 
-//Resize canvas to look crisp on any screen size & DPR
+/* Resize canvas to look crisp on any screen size & DPR */
 function resizeSigCanvas(){
   const dpr = window.devicePixelRatio || 1;
   const cssWidth = sigCanvas.clientWidth || sigCanvas.parentElement.clientWidth || 560;
@@ -450,17 +450,25 @@ function resizeSigCanvas(){
   sigCtx.strokeStyle = "#000";
   scaleX = sigCanvas.width / (sigCanvas.getBoundingClientRect().width || cssWidth);
   scaleY = sigCanvas.height / (sigCanvas.getBoundingClientRect().height || cssHeight);
- // White background (prevents transparent PNG on PDF)——————
+  // White background (prevents transparent PNG on PDFs)
   //sigCtx.fillStyle = "#fff";
   //sigCtx.fillRect(0,0,sigCanvas.width/scaleX, sigCanvas.height/scaleY);
 }
 
-
 function openSig(target){
-  sigTarget = target; // 'policyowner' | 'witness'
-  $("sigModalTitle").textContent = target === 'policyowner' ? "Sign: Proposed Life Insured / Policyowner" : "Sign: Witness";
+  sigTarget = target; // 'owner' | 'witness' | 'trustee'
+
+if (target === 'owner') {
+  $("sigModalTitle").textContent = "Sign: Policy Owner";
+} else if (target === 'witness') {
+  $("sigModalTitle").textContent = "Sign: Witness";
+} else if (target === 'trustee') {
+  $("sigModalTitle").textContent = "Sign: Trustee";
+}
+
   sigModal.style.display = "block";
   sigModal.setAttribute("aria-hidden", "false");
+
   // Next frame: ensure layout settled then resize canvas
   requestAnimationFrame(()=>{
     resizeSigCanvas();
@@ -476,15 +484,11 @@ function openSig(target){
     }
   });
 }
-
-
 $("sigClear").addEventListener("click", ()=>{
   sigCtx.clearRect(0,0,sigCanvas.width, sigCanvas.height);
-  
   // Repaint white bg in CSS pixels
-  // sigCtx.fillStyle="#fff"; sigCtx.fillRect(0,0,sigCanvas.width/scaleX, sigCanvas.height/scaleY);
+  //sigCtx.fillStyle="#fff"; sigCtx.fillRect(0,0,sigCanvas.width/scaleX, sigCanvas.height/scaleY);
 });
-  
 $("sigCancel").addEventListener("click", closeSigModal);
 function closeSigModal(){
   sigModal.style.display = "none";
@@ -500,8 +504,7 @@ $("sigDone").addEventListener("click", ()=>{
   closeSigModal();
 });
 
-
-//Drawing (mouse + touch) with coordinate conversion *//
+/* Drawing (mouse + touch) with coordinate conversion */
 function getPos(e){
   const rect = sigCanvas.getBoundingClientRect();
   if(e.touches && e.touches[0]){
@@ -544,18 +547,21 @@ window.addEventListener("resize", ()=> {
   }
 });
 
-  /* Clear preview buttons + restore previews on load */
-$("clearPreviewPolicyowner").addEventListener("click", ()=>{
-  localStorage.removeItem("sig_policyowner");
-  $("preview_policyowner").innerHTML = `<span>Tap to Sign 
-  (Proposed Life Insured / Policyowner)</span>`;
+/* Clear preview buttons + restore previews on load */
+$("clearPreviewOwner").addEventListener("click", ()=>{
+  localStorage.removeItem("sig_owner");
+  $("preview_owner").innerHTML = `<span>Tap to Sign (Owner)</span>`;
 });
 $("clearPreviewWitness").addEventListener("click", ()=>{
   localStorage.removeItem("sig_witness");
   $("preview_witness").innerHTML = `<span>Tap to Sign (Witness)</span>`;
 });
+$("clearPreviewTrustee").addEventListener("click", ()=>{
+  localStorage.removeItem("sig_trustee");
+  $("preview_trustee").innerHTML = `<span>Tap to Sign (Trustee)</span>`;
+});
 window.addEventListener("DOMContentLoaded", ()=>{
-  ["policyowner","witness"].forEach(role=>{
+  ["owner","witness","trustee"].forEach(role=>{
     const saved = localStorage.getItem("sig_"+role);
     if(saved){ $("preview_"+role).innerHTML = `<img alt="Signature ${role}" src="${saved}">`; }
   });
@@ -604,14 +610,19 @@ amendmentField.setText(wrapTextByWordsWithPrefix(val, 60));
   safeSetField(form, fieldName, localStorage.getItem(fieldName));
   });
     
-    // Policyowner signature
-    const sigPolicyowner = localStorage.getItem("sig_policyowner");
-if (sigPolicyowner) {
-  try {
-    const imgPolicyowner = await pdfDoc.embedPng(sigPolicyowner);
-    const { width, height } = imgPolicyowner.size();
+    /* --------- SIGNATURE IMAGE EMBEDDING (embedPng + drawImage) --------- */
+    const pages = pdfDoc.getPages();
+    const pageIndex = Math.min(3, pages.length - 1); // Page 4 (index 3); adjust if needed
+    const page = pages[pageIndex];
 
-    const previewEl = document.getElementById("preview_policyowner");
+// Owner signature FillPDF
+const sigOwner = localStorage.getItem("sig_owner");
+if (sigOwner) {
+  try {
+    const imgOwner = await pdfDoc.embedPng(sigOwner);
+    const { width, height } = imgOwner.size();
+
+    const previewEl = document.getElementById("preview_owner");
     const boxW = previewEl.offsetWidth;
     const boxH = previewEl.offsetHeight;
 
@@ -619,14 +630,14 @@ if (sigPolicyowner) {
     let drawW = width * scale;
     let drawH = height * scale;
 
-    const factor = 0.35; // % scale on PDF
-    const posX = 380;     // X position on PDF
-    const posY = 145;    // Y position on PDF
+    const factor = 0.40;    // 40% scale
+    const posX = 50;         // X position on PDF
+    const posY = 240;        // Y position on PDF
 
     drawW *= factor;
     drawH *= factor;
 
-    page.drawImage(imgPolicyowner, {
+    page.drawImage(imgOwner, {
       x: posX,
       y: posY,
       width: drawW,
@@ -637,8 +648,8 @@ if (sigPolicyowner) {
   }
 }
 
-    // Witness signature
-    const sigWitness = localStorage.getItem("sig_witness");
+// Witness signature FillPDF
+const sigWitness = localStorage.getItem("sig_witness");
 if (sigWitness) {
   try {
     const imgWitness = await pdfDoc.embedPng(sigWitness);
@@ -652,9 +663,9 @@ if (sigWitness) {
     let drawW = width * scale;
     let drawH = height * scale;
 
-    const factor = 0.35; // % scale on PDF
-    const posX = 50;    // X position on PDF
-    const posY = 145;    // Y position on PDF
+    const factor = 0.40;    // 45% scale
+    const posX = 420;         // X position on PDF
+    const posY = 240;        // Y position on PDF
 
     drawW *= factor;
     drawH *= factor;
@@ -670,19 +681,48 @@ if (sigWitness) {
   }
 }
 
-    //Flatten PDF
-    form.flatten();
 
-    //Save + Download
+// Trustee signature FillPDF
+const sigTrustee = localStorage.getItem("sig_trustee");
+if (sigTrustee) {
+  try {
+    const imgTrustee = await pdfDoc.embedPng(sigTrustee);
+    const { width, height } = imgTrustee.size();
+
+    const previewEl = document.getElementById("preview_trustee");
+    const boxW = previewEl.offsetWidth;
+    const boxH = previewEl.offsetHeight;
+
+    const scale = Math.min(boxW / width, boxH / height);
+    let drawW = width * scale;
+    let drawH = height * scale;
+
+    const factor = 0.40;    // 45% scale
+    const posX = 240;         // X position on PDF
+    const posY = 240;        // Y position on PDF
+
+    drawW *= factor;
+    drawH *= factor;
+
+    page.drawImage(imgTrustee, {
+      x: posX,
+      y: posY,
+      width: drawW,
+      height: drawH
+    });
+  } catch (e) {
+    console.error(e);
+  }
+}
+    
+    // Flatten form fields before saving
+    form.flatten();
+    
+    // Save & download FillPDF
     const pdfBytes = await pdfDoc.save();
     const blob = new Blob([pdfBytes], { type: "application/pdf" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "Amendment_to_Application_LF1042_filled.pdf";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+    const a = document.createElement("a"); a.href = url; a.download = "Filled_Credit_Card_Form.pdf"; document.body.appendChild(a); a.click(); a.remove();
     setTimeout(()=> URL.revokeObjectURL(url), 2500);
 
   } catch(err){
@@ -693,16 +733,47 @@ if (sigWitness) {
   }
 }
 
-  //Autobind - Bind text inputs, textareas, and selects
-  // binding = connection between field ↔️ localStorage
-document.querySelectorAll("input[type=text], textarea, select").forEach(autoBindSave);
 
-  // Attach when page loads
+/* ---------- RESET ALL DATA function ---------- */
+function resetAll() {
+  if (!confirm("Are you sure you want to reset the form? All saved data will be cleared.")) {
+    return;
+  }
+
+  // 1) Clear ALL saved keys that belong to this form
+  //    (Everything starting with "Nom_" plus legacy signature keys)
+  const keys = Object.keys(localStorage);
+  keys.forEach(k => {
+    if (k.startsWith("Nom_")) localStorage.removeItem(k);
+  });
+  // Legacy sig keys (if you still use these)
+  ["sig_owner","sig_witness","sig_trustee"].forEach(k => localStorage.removeItem(k));
+
+  // 2) Clear the live UI values for Section A/E (inputs that remain in DOM)
+  document.querySelectorAll("input, select, textarea").forEach(el => {
+    if (!el.id) return;
+    if (el.type === "checkbox" || el.type === "radio") el.checked = false;
+    else el.value = "";
+  });
+
+  // 3) Rebuild Nominees UI to exactly ONE card (Nominee 1)
+  nomineesContainer.innerHTML = "";
+  nomineeCount = 1;
+  localStorage.setItem("nomineeCount", 1);
+  nomineesContainer.appendChild(createNomineeEntry(1));
+  addNomineeBtn.disabled = false;
+
+  // 4) Reset signature previews
+  $("preview_owner").innerHTML   = `<span>Tap to Sign (Policy Owner)</span>`;
+  $("preview_witness").innerHTML = `<span>Tap to Sign (Witness)</span>`;
+  $("preview_trustee").innerHTML = `<span>Tap to Sign (Trustee)</span>`;
+
+  showSaveStatus();
+}
+
+  /* ---------- Wire buttons ---------- */
 $("generate").addEventListener("click", fillPDF);
-$("resetAll").addEventListener("click", () => {
-  localStorage.clear();
-  location.reload();
-});
+$("resetAll").addEventListener("click", resetAll);
   
 </script>
 </main> 
