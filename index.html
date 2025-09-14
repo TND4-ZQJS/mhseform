@@ -94,7 +94,8 @@
 
     <div class="row">
       <label style="flex:1">Policy Owner's Name
-        <input id="MHSE_Info_InsName" class="persist" type="text" placeholder="Enter name">
+        <!-- NOTE: give unique IDs to different fields. Re-using MHSE_Info_InsName will cause issues -->
+        <input id="MHSE_Info_POName" class="persist" type="text" placeholder="Enter name">
       </label>
     </div>
     <div class="row">
@@ -126,7 +127,7 @@
       <label class="inline"><input name="Deductibletpye" id="MHSE_Deductible_500" type="radio">RM500</label>
       <label class="inline"><input name="Deductibletpye" id="MHSE_Deductible_1000" type="radio">RM1000</label>
       <label class="inline"><input name="Deductibletpye" id="MHSE_Deductible_5000" type="radio">RM5000</label>
-      <label class="inline"><input name="Deductibletpye" id="MHSE_Deductible_10000" type="radio">RM1000</label>
+      <label class="inline"><input name="Deductibletpye" id="MHSE_Deductible_10000" type="radio">RM10000</label>
         </div>
     </section>
 
@@ -135,7 +136,7 @@
         <div class="row">
       <label class="inline"><input name="Plantpye" id="MHSE_Plan_200" type="radio">MHSE Plan 200</label>
       <label class="inline"><input name="Plantpye" id="MHSE_Plan_300" type="radio">MHSE Plan 300</label>
-      <label class="inline"><input name="Plantpye" id="MHSE_Plan_1000" type="radio">MNHSE Plan 1000</label>
+      <label class="inline"><input name="Plantpye" id="MHSE_Plan_1000" type="radio">MHSE Plan 1000</label>
         </div>
     </section>
 
@@ -175,7 +176,7 @@
     </div>
 
       <div class="row">
-      <label style="flex:1">IC No. (as per bank's record)
+      <label style="flex:1">Account No. (as per bank's record)
         <input id="MHSE_EBanking_BankAcc" class="persist" type="text" placeholder="Enter account no.">
       </label>
     </div>
@@ -255,11 +256,11 @@
     </label>
     </div>
 
-        <div class="sig-preview" id="preview_policyowner" onclick="openSig('policyowner')">
+        <div class="sig-preview" id="preview_owner" onclick="openSig('owner')">
       <span>Tap to Sign (Proposed Life Insured/Policyowner)</span>
     </div>
     <div class="row">
-      <button id="clearPreviewPolicyowner" class="secondary" type="button">Clear Signature</button>
+      <button id="clearPreviewOwner" class="secondary" type="button">Clear Signature</button>
     </div>
   </section>
 
@@ -292,12 +293,12 @@
     <h2>Signature of Trustee</h2>
     <div class="row">
       <label style="flex:1">Trustee Name
-        <input id="MHSE_Sign_POName" class="persist" type="text" placeholder="Enter name">
+        <input id="MHSE_Sign_TrusteeName" class="persist" type="text" placeholder="Enter name">
       </label>
     </div>
     <div class="row">
     <label style="flex:1">IC No.
-        <input id="MHSE_Sign_PONIRC" class="persist" type="text" placeholder="e.g. 900101-14-1234">
+        <input id="MHSE_Sign_TrusteeNIRC" class="persist" type="text" placeholder="e.g. 900101-14-1234">
     </label>
     </div>
 
@@ -334,27 +335,30 @@
 <script>
 
   function $(id) {
-  return document.getElementById(id);
-}
+    return document.getElementById(id);
+  }
   
 /* ---------- CONFIG ---------- */
 const PDF_FILENAME = "Amendment to Application_LF1042_fillable.pdf";
 
 /* ---SAVE STATUS + LOCALSTORAGE (Text, Checkbox, Dropdown) ---------- */
-const saveStatusEl = document.getElementById("saveStatus");
+const saveStatusEl = $("saveStatus");
 
 function showSaveStatus(){
+  if(!saveStatusEl) return;
   saveStatusEl.style.opacity = 1;
   clearTimeout(saveStatusEl._timer);
   saveStatusEl._timer = setTimeout(()=> saveStatusEl.style.opacity = 0, 1200);
 }
 
 function saveElValue(el){
+  if(!el || !el.id) return;
   localStorage.setItem(el.id, el.value);
   showSaveStatus();
 }
 
 function autoBindSave(el){
+  if(!el || !el.id) return;
   // Restore saved value
   const saved = localStorage.getItem(el.id);
   if(saved !== null){
@@ -380,10 +384,14 @@ function autoBindSave(el){
     });
   }
 }
-  
+
+// Auto bind all .persist elements on DOMContentLoaded
+window.addEventListener("DOMContentLoaded", ()=>{
+  document.querySelectorAll(".persist").forEach(el => autoBindSave(el));
+});
+
 /* ---------- UNIVERSAL HELPER FUNCTION ---------- */
 
-  //Detect input type - text/dropdown/checkbox/radio
 function safeSetField(form, fieldName, value) {
   if (value === null || value === undefined) return;
 
@@ -393,14 +401,14 @@ function safeSetField(form, fieldName, value) {
     // text or textarea, then force Uppercase
     try {
       field = form.getTextField(fieldName);
-      field.setText(value.toUpperCase());
+      field.setText(String(value).toUpperCase());
       return;
     } catch (e) {}
 
     // dropdown
     try {
       field = form.getDropdown(fieldName);
-      field.select(value);
+      field.select(String(value));
       return;
     } catch (e) {}
 
@@ -418,7 +426,7 @@ function safeSetField(form, fieldName, value) {
     // radio
     try {
       field = form.getRadioGroup(fieldName);
-      field.select(value);
+      field.select(String(value));
       return;
     } catch (e) {}
 
@@ -429,16 +437,17 @@ function safeSetField(form, fieldName, value) {
 }
 
 
-/* ---------- SIGNATURE MODAL LOGIC (Owner + Payor) with HiDPI scaling ---------- */
+/* ---------- SIGNATURE MODAL LOGIC (Owner + Witness + Trustee) with HiDPI scaling ---------- */
 let sigTarget = null;
 const sigModal = $("sigModal");
 const sigCanvas = $("sigCanvas");
-const sigCtx = sigCanvas.getContext("2d");
+const sigCtx = sigCanvas ? sigCanvas.getContext("2d") : null;
 let drawing = false;
 let scaleX = 1, scaleY = 1;
 
 /* Resize canvas to look crisp on any screen size & DPR */
 function resizeSigCanvas(){
+  if(!sigCanvas || !sigCtx) return;
   const dpr = window.devicePixelRatio || 1;
   const cssWidth = sigCanvas.clientWidth || sigCanvas.parentElement.clientWidth || 560;
   const cssHeight = sigCanvas.clientHeight || 220;
@@ -451,59 +460,65 @@ function resizeSigCanvas(){
   sigCtx.strokeStyle = "#000";
   scaleX = sigCanvas.width / (sigCanvas.getBoundingClientRect().width || cssWidth);
   scaleY = sigCanvas.height / (sigCanvas.getBoundingClientRect().height || cssHeight);
-  // White background (prevents transparent PNG on PDFs)
-  //sigCtx.fillStyle = "#fff";
-  //sigCtx.fillRect(0,0,sigCanvas.width/scaleX, sigCanvas.height/scaleY);
 }
 
 function openSig(target){
-  sigTarget = target; // 'owner' | 'witness' | 'trustee'
+  // target = 'owner' | 'witness' | 'trustee'
+  sigTarget = target;
 
-if (target === 'owner') {
-  $("sigModalTitle").textContent = "Sign: Policy Owner";
-} else if (target === 'witness') {
-  $("sigModalTitle").textContent = "Sign: Witness";
-} else if (target === 'trustee') {
-  $("sigModalTitle").textContent = "Sign: Trustee";
-}
+  if (!sigModal) return;
+
+  if (target === 'owner') {
+    $("sigModalTitle").textContent = "Sign: Policy Owner";
+  } else if (target === 'witness') {
+    $("sigModalTitle").textContent = "Sign: Witness";
+  } else if (target === 'trustee') {
+    $("sigModalTitle").textContent = "Sign: Trustee";
+  } else {
+    $("sigModalTitle").textContent = "Draw Signature";
+  }
 
   sigModal.style.display = "block";
   sigModal.setAttribute("aria-hidden", "false");
 
-  // Next frame: ensure layout settled then resize canvas
   requestAnimationFrame(()=>{
     resizeSigCanvas();
-    // If there is an existing signature, draw it to current canvas size
     const existing = localStorage.getItem("sig_"+target);
-    if (existing){
+    if (existing && sigCtx){
       const img = new Image();
       img.onload = ()=>{
-        // cover the canvas area with existing image
-        sigCtx.drawImage(img, 0, 0, sigCanvas.width/scaleX, sigCanvas.height/scaleY);
+        sigCtx.clearRect(0,0,sigCanvas.width, sigCanvas.height);
+        sigCtx.drawImage(img, 0, 0, sigCanvas.width/ (window.devicePixelRatio || 1), sigCanvas.height/ (window.devicePixelRatio || 1));
       };
       img.src = existing;
     }
   });
 }
-$("sigClear").addEventListener("click", ()=>{
-  sigCtx.clearRect(0,0,sigCanvas.width, sigCanvas.height);
-  // Repaint white bg in CSS pixels
-  //sigCtx.fillStyle="#fff"; sigCtx.fillRect(0,0,sigCanvas.width/scaleX, sigCanvas.height/scaleY);
-});
-$("sigCancel").addEventListener("click", closeSigModal);
+
+if ($("sigClear")) {
+  $("sigClear").addEventListener("click", ()=>{
+    if(sigCtx && sigCanvas) sigCtx.clearRect(0,0,sigCanvas.width, sigCanvas.height);
+  });
+}
+if ($("sigCancel")) {
+  $("sigCancel").addEventListener("click", closeSigModal);
+}
 function closeSigModal(){
+  if(!sigModal) return;
   sigModal.style.display = "none";
   sigModal.setAttribute("aria-hidden", "true");
   sigTarget = null;
 }
-$("sigDone").addEventListener("click", ()=>{
-  if(!sigTarget) return;
-  const dataURL = sigCanvas.toDataURL("image/png");
-  localStorage.setItem("sig_"+sigTarget, dataURL);
-  const preview = $("preview_"+sigTarget);
-  preview.innerHTML = `<img alt="Signature ${sigTarget}" src="${dataURL}">`;
-  closeSigModal();
-});
+if ($("sigDone")) {
+  $("sigDone").addEventListener("click", ()=>{
+    if(!sigTarget || !sigCanvas) return;
+    const dataURL = sigCanvas.toDataURL("image/png");
+    localStorage.setItem("sig_"+sigTarget, dataURL);
+    const preview = $("preview_"+sigTarget);
+    if(preview) preview.innerHTML = `<img alt="Signature ${sigTarget}" src="${dataURL}">`;
+    closeSigModal();
+  });
+}
 
 /* Drawing (mouse + touch) with coordinate conversion */
 function getPos(e){
@@ -514,15 +529,16 @@ function getPos(e){
   return { x: (e.clientX - rect.left), y: (e.clientY - rect.top) };
 }
 function startDraw(e){
+  if(!sigCtx) return;
   drawing = true;
   sigCtx.beginPath();
   const {x,y}=getPos(e);
   sigCtx.moveTo(x, y);
   e.preventDefault?.();
 }
-function endDraw(){ drawing = false; sigCtx.beginPath(); }
+function endDraw(){ drawing = false; sigCtx && sigCtx.beginPath(); }
 function moveDraw(e){
-  if(!drawing) return;
+  if(!drawing || !sigCtx) return;
   const {x,y} = getPos(e);
   sigCtx.lineTo(x, y);
   sigCtx.stroke();
@@ -530,49 +546,66 @@ function moveDraw(e){
   sigCtx.moveTo(x, y);
   e.preventDefault?.();
 }
-sigCanvas.addEventListener("mousedown", startDraw);
-sigCanvas.addEventListener("mousemove", moveDraw);
-window.addEventListener("mouseup", endDraw);
-sigCanvas.addEventListener("touchstart", startDraw, {passive:false});
-sigCanvas.addEventListener("touchmove", moveDraw, {passive:false});
-sigCanvas.addEventListener("touchend", endDraw);
+if(sigCanvas){
+  sigCanvas.addEventListener("mousedown", startDraw);
+  sigCanvas.addEventListener("mousemove", moveDraw);
+  window.addEventListener("mouseup", endDraw);
+  sigCanvas.addEventListener("touchstart", startDraw, {passive:false});
+  sigCanvas.addEventListener("touchmove", moveDraw, {passive:false});
+  sigCanvas.addEventListener("touchend", endDraw);
+}
 window.addEventListener("resize", ()=> {
   // Only resize when modal is open to avoid reflow glitches
-  if(sigModal.getAttribute("aria-hidden")==="false"){ 
+  if(sigModal && sigModal.getAttribute("aria-hidden")==="false"){ 
     const img = new Image();
-    img.onload = ()=>{
-      resizeSigCanvas();
-      sigCtx.drawImage(img, 0, 0, sigCanvas.width/scaleX, sigCanvas.height/scaleY);
-    };
-    img.src = sigCanvas.toDataURL("image/png");
+    if(sigCanvas){
+      img.onload = ()=>{
+        resizeSigCanvas();
+        sigCtx.drawImage(img, 0, 0, sigCanvas.width/ (window.devicePixelRatio || 1), sigCanvas.height/ (window.devicePixelRatio || 1));
+      };
+      img.src = sigCanvas.toDataURL("image/png");
+    }
   }
 });
 
 /* Clear preview buttons + restore previews on load */
-$("clearPreviewOwner").addEventListener("click", ()=>{
-  localStorage.removeItem("sig_owner");
-  $("preview_owner").innerHTML = `<span>Tap to Sign (Owner)</span>`;
-});
-$("clearPreviewWitness").addEventListener("click", ()=>{
-  localStorage.removeItem("sig_witness");
-  $("preview_witness").innerHTML = `<span>Tap to Sign (Witness)</span>`;
-});
-$("clearPreviewTrustee").addEventListener("click", ()=>{
-  localStorage.removeItem("sig_trustee");
-  $("preview_trustee").innerHTML = `<span>Tap to Sign (Trustee)</span>`;
-});
+if ($("clearPreviewOwner")) {
+  $("clearPreviewOwner").addEventListener("click", ()=>{
+    localStorage.removeItem("sig_owner");
+    const el = $("preview_owner");
+    if(el) el.innerHTML = `<span>Tap to Sign (Policy Owner)</span>`;
+  });
+}
+if ($("clearPreviewWitness")) {
+  $("clearPreviewWitness").addEventListener("click", ()=>{
+    localStorage.removeItem("sig_witness");
+    const el = $("preview_witness");
+    if(el) el.innerHTML = `<span>Tap to Sign (Witness)</span>`;
+  });
+}
+if ($("clearPreviewTrustee")) {
+  $("clearPreviewTrustee").addEventListener("click", ()=>{
+    localStorage.removeItem("sig_trustee");
+    const el = $("preview_trustee");
+    if(el) el.innerHTML = `<span>Tap to Sign (Trustee)</span>`;
+  });
+}
+
 window.addEventListener("DOMContentLoaded", ()=>{
   ["owner","witness","trustee"].forEach(role=>{
     const saved = localStorage.getItem("sig_"+role);
-    if(saved){ $("preview_"+role).innerHTML = `<img alt="Signature ${role}" src="${saved}">`; }
+    if(saved){ 
+      const preview = $("preview_"+role);
+      if(preview) preview.innerHTML = `<img alt="Signature ${role}" src="${saved}">`; 
+    }
   });
 });
-  
 
 /* ---------- GENERATE PDF ---------- */
 async function fillPDF(){
   try {
-    $("generate").disabled = true;
+    const genBtn = $("generate");
+    if(genBtn) genBtn.disabled = true;
 
     const res = await fetch(PDF_FILENAME);
     if (!res.ok) throw new Error("Cannot load PDF: " + PDF_FILENAME);
@@ -580,17 +613,22 @@ async function fillPDF(){
     const pdfDoc = await PDFLib.PDFDocument.load(bytes);
     const form = pdfDoc.getForm();
 
+    // Single pages / page variable usage — avoid re-declaring consts
     const pages = pdfDoc.getPages();
-    const page = pages[0]; // use first page
+    // Use first page for form text fields, and pageIndex for signature drawing if available
+    const firstPage = pages[0];
 
     // Amendment Details - Allow multiple lines in PDF field
-    const amendmentField = form.getTextField("Amendment_WriteDetails");
-    if (amendmentField) {
-    amendmentField.enableMultiline(); // ✅ allow multiple lines in the PDF field
-    const val = localStorage.getItem("Amendment_WriteDetails") || "";
-amendmentField.setText(wrapTextByWordsWithPrefix(val, 60));
+    try {
+      const amendmentField = form.getTextField("Amendment_WriteDetails");
+      if (amendmentField) {
+        amendmentField.enableMultiline();
+        const val = localStorage.getItem("Amendment_WriteDetails") || "";
+        amendmentField.setText(wrapTextByWordsWithPrefix ? wrapTextByWordsWithPrefix(val, 60) : val);
+      }
+    } catch (e) {
+      // ignore if field not present
     }
- 
 
     // FILL FORM FIELDS FROM LOCALSTORAGE HERE
    [
@@ -608,132 +646,65 @@ amendmentField.setText(wrapTextByWordsWithPrefix(val, 60));
   "Sign_Witness_Name",
   "Sign_Witness_NRIC"
   ].forEach(fieldName => {
-  safeSetField(form, fieldName, localStorage.getItem(fieldName));
+    try {
+      safeSetField(form, fieldName, localStorage.getItem(fieldName));
+    } catch(e){
+      // continue on errors for missing fields
+      console.warn("Error setting field", fieldName, e);
+    }
   });
-    
+
     /* --------- SIGNATURE IMAGE EMBEDDING (embedPng + drawImage) --------- */
-    const pages = pdfDoc.getPages();
-    const pageIndex = Math.min(3, pages.length - 1); // Page 4 (index 3); adjust if needed
-    const page = pages[pageIndex];
+    // Choose a page index to draw signatures on - adjust as needed
+    const pageIndex = Math.min(3, pages.length - 1); // attempt page 4 (index 3) if exists
+    const page = pages[pageIndex] || firstPage;
 
-// Owner signature FillPDF
-const sigOwner = localStorage.getItem("sig_owner");
-if (sigOwner) {
-  try {
-    const imgOwner = await pdfDoc.embedPng(sigOwner);
-    const { width, height } = imgOwner.size();
+    // Helper to embed a signature
+    async function embedSignature(key, posX, posY, factor=0.4){
+      const sig = localStorage.getItem(key);
+      if (!sig) return;
+      try {
+        const img = await pdfDoc.embedPng(sig);
+        const { width, height } = img.size();
+        // compute draw size (keep aspect, scaled by factor of preview box + factor)
+        const drawW = width * factor;
+        const drawH = height * factor;
+        page.drawImage(img, {
+          x: posX,
+          y: posY,
+          width: drawW,
+          height: drawH
+        });
+      } catch (e) {
+        console.error("Embed signature failed for", key, e);
+      }
+    }
 
-    const previewEl = document.getElementById("preview_owner");
-    const boxW = previewEl.offsetWidth;
-    const boxH = previewEl.offsetHeight;
+    // Owner signature
+    await embedSignature("sig_owner", 50, 240, 0.4);
+    // Witness
+    await embedSignature("sig_witness", 420, 240, 0.4);
+    // Trustee
+    await embedSignature("sig_trustee", 240, 240, 0.4);
 
-    const scale = Math.min(boxW / width, boxH / height);
-    let drawW = width * scale;
-    let drawH = height * scale;
-
-    const factor = 0.40;    // 40% scale
-    const posX = 50;         // X position on PDF
-    const posY = 240;        // Y position on PDF
-
-    drawW *= factor;
-    drawH *= factor;
-
-    page.drawImage(imgOwner, {
-      x: posX,
-      y: posY,
-      width: drawW,
-      height: drawH
-    });
-  } catch (e) {
-    console.error(e);
-  }
-}
-
-// Witness signature FillPDF
-const sigWitness = localStorage.getItem("sig_witness");
-if (sigWitness) {
-  try {
-    const imgWitness = await pdfDoc.embedPng(sigWitness);
-    const { width, height } = imgWitness.size();
-
-    const previewEl = document.getElementById("preview_witness");
-    const boxW = previewEl.offsetWidth;
-    const boxH = previewEl.offsetHeight;
-
-    const scale = Math.min(boxW / width, boxH / height);
-    let drawW = width * scale;
-    let drawH = height * scale;
-
-    const factor = 0.40;    // 45% scale
-    const posX = 420;         // X position on PDF
-    const posY = 240;        // Y position on PDF
-
-    drawW *= factor;
-    drawH *= factor;
-
-    page.drawImage(imgWitness, {
-      x: posX,
-      y: posY,
-      width: drawW,
-      height: drawH
-    });
-  } catch (e) {
-    console.error(e);
-  }
-}
-
-
-// Trustee signature FillPDF
-const sigTrustee = localStorage.getItem("sig_trustee");
-if (sigTrustee) {
-  try {
-    const imgTrustee = await pdfDoc.embedPng(sigTrustee);
-    const { width, height } = imgTrustee.size();
-
-    const previewEl = document.getElementById("preview_trustee");
-    const boxW = previewEl.offsetWidth;
-    const boxH = previewEl.offsetHeight;
-
-    const scale = Math.min(boxW / width, boxH / height);
-    let drawW = width * scale;
-    let drawH = height * scale;
-
-    const factor = 0.40;    // 45% scale
-    const posX = 240;         // X position on PDF
-    const posY = 240;        // Y position on PDF
-
-    drawW *= factor;
-    drawH *= factor;
-
-    page.drawImage(imgTrustee, {
-      x: posX,
-      y: posY,
-      width: drawW,
-      height: drawH
-    });
-  } catch (e) {
-    console.error(e);
-  }
-}
-    
     // Flatten form fields before saving
-    form.flatten();
-    
+    try { form.flatten(); } catch(e){ /* ignore if flatten not supported */ }
+
     // Save & download FillPDF
     const pdfBytes = await pdfDoc.save();
     const blob = new Blob([pdfBytes], { type: "application/pdf" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = "Filled_Credit_Card_Form.pdf"; document.body.appendChild(a); a.click(); a.remove();
+    const a = document.createElement("a"); a.href = url; a.download = "Filled_Amendment_Form.pdf"; document.body.appendChild(a); a.click(); a.remove();
     setTimeout(()=> URL.revokeObjectURL(url), 2500);
 
   } catch(err){
-    alert("PDF generation failed: " + (err.message || err));
+    alert("PDF generation failed: " + (err && err.message ? err.message : err));
     console.error(err);
   } finally {
-    $("generate").disabled = false;
+    const genBtn = $("generate");
+    if(genBtn) genBtn.disabled = false;
   }
 }
-
 
 /* ---------- RESET ALL DATA function ---------- */
 function resetAll() {
@@ -741,40 +712,32 @@ function resetAll() {
     return;
   }
 
-  // 1) Clear ALL saved keys that belong to this form
-  //    (Everything starting with "Nom_" plus legacy signature keys)
+  // Remove keys specific to this form (MHSE_*) and sig_*
   const keys = Object.keys(localStorage);
   keys.forEach(k => {
-    if (k.startsWith("Nom_")) localStorage.removeItem(k);
+    if (k.startsWith("MHSE_") || k.startsWith("sig_") || k.startsWith("Amendment_") || k.startsWith("Sign_") || k.startsWith("LifeProposed_") || k.startsWith("PolicyNo")) {
+      localStorage.removeItem(k);
+    }
   });
-  // Legacy sig keys (if you still use these)
-  ["sig_owner","sig_witness","sig_trustee"].forEach(k => localStorage.removeItem(k));
 
-  // 2) Clear the live UI values for Section A/E (inputs that remain in DOM)
+  // Clear inputs in the DOM
   document.querySelectorAll("input, select, textarea").forEach(el => {
     if (!el.id) return;
     if (el.type === "checkbox" || el.type === "radio") el.checked = false;
     else el.value = "";
   });
 
-  // 3) Rebuild Nominees UI to exactly ONE card (Nominee 1)
-  nomineesContainer.innerHTML = "";
-  nomineeCount = 1;
-  localStorage.setItem("nomineeCount", 1);
-  nomineesContainer.appendChild(createNomineeEntry(1));
-  addNomineeBtn.disabled = false;
-
-  // 4) Reset signature previews
-  $("preview_owner").innerHTML   = `<span>Tap to Sign (Policy Owner)</span>`;
-  $("preview_witness").innerHTML = `<span>Tap to Sign (Witness)</span>`;
-  $("preview_trustee").innerHTML = `<span>Tap to Sign (Trustee)</span>`;
+  // Reset signature previews
+  const pOwner = $("preview_owner"); if(pOwner) pOwner.innerHTML = `<span>Tap to Sign (Policy Owner)</span>`;
+  const pWitness = $("preview_witness"); if(pWitness) pWitness.innerHTML = `<span>Tap to Sign (Witness)</span>`;
+  const pTrustee = $("preview_trustee"); if(pTrustee) pTrustee.innerHTML = `<span>Tap to Sign (Trustee)</span>`;
 
   showSaveStatus();
 }
 
-  /* ---------- Wire buttons ---------- */
-$("generate").addEventListener("click", fillPDF);
-$("resetAll").addEventListener("click", resetAll);
+/* ---------- Wire buttons ---------- */
+if ($("generate")) $("generate").addEventListener("click", fillPDF);
+if ($("resetAll")) $("resetAll").addEventListener("click", resetAll);
   
 </script>
 </main> 
