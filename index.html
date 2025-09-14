@@ -32,73 +32,6 @@
   width: 100%;
 }
 
-/* Select box */
-.dropdown-with-button select {
-  width: 100%;
-  padding: 10px 80px 10px 12px; /* leave space for button */
-  border: 1px solid #ddd;
-  border-radius: 10px;          
-  font-size: 1rem;
-  appearance: none;
-  background-color: #fff;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.dropdown-with-button select:focus {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(0,122,255,0.2);
-}
-
-/* Insert button as egg shape */
-.dropdown-with-button button.insert {
-  position: absolute;
-  top: 50%;
-  right: 8px;               /* some spacing from edge */
-  transform: translateY(-50%); /* vertically center */
-  height: 28px;              /* fixed height for egg shape */
-  padding: 0 12px;           /* horizontal padding */
-  border: none;              /* seamless */
-  border-radius: 50px;       /* fully rounded (egg shape) */
-  background-color: #fff;    /* same as select */
-  color: var(--accent);
-  font-size: 0.85rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.12); /* subtle shadow */
-  transition: background 0.15s, transform 0.1s;
-}
-
-.dropdown-with-button button.insert:hover {
-  background-color: #f5f6fa;
-}
-
-.dropdown-with-button button.insert:active {
-  transform: translateY(-50%) scale(0.97);
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-}
-
-/* Adjust select padding to avoid overlap with egg button */
-.dropdown-with-button select {
-  width: 100%;
-  padding: 10px 100px 10px 12px; /* make room for egg button */
-  border: 1px solid #ddd;
-  border-radius: 10px;          
-  font-size: 1rem;
-  appearance: none;
-  background-color: #fff;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-  
-  /* Policy grid (for "additional policies" dynamic demo to mirror reference behavior) */
-  .policy-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .policy{background:#fff;padding:12px;border-radius:10px;border:1px solid #eee;position:relative}
-  .policy h3{margin:0 0 8px 0;font-size:0.95rem;display:flex;align-items:center;justify-content:space-between}
-  .policy .remove-btn{background:transparent;border:1px solid var(--line);color:#333;border-radius:8px;padding:6px 10px;font-size:0.9rem}
-  .policy .remove-btn:hover{border-color:#d0d0d7}
-
   /* Signature preview tiles */
   .sig-preview{
     width:100%; height:150px; border:1px dashed #bbb; border-radius:10px;
@@ -138,22 +71,38 @@
 </head>
 <body>
 <main>
-  <h1>Amendment to Application (LF1042)</h1>
+  <h1>MHSE Guaranteed Conversion Program (LF1047)</h1>
 
-  <!-- SECTION: Proposed Life Insured Info -->
+  <!-- SECTION: Policy Info -->
   <section class="section">
     <h2>Proposed Life Insured Info</h2>
 
-    <label>Proposed Life Insured/Insured Name
-      <input id="LifeProposed_Name" class="persist" type="text" placeholder="AS IN I/C">
+    <label>Policy No.
+      <input id="MHSE_Info_PolicyNo" class="persist" type="text" placeholder="Enter policy no.">
     </label>
 
     <div class="row">
-      <label style="flex:1">Policy No. (single)
-        <input id="PolicyNo" class="persist" type="text" placeholder="Enter policy number">
+      <label style="flex:1">Insured's Name
+        <input id="MHSE_Info_InsName" class="persist" type="text" placeholder="Enter name">
       </label>
-      <label style="flex:1">IC Number
-        <input id="LifeProposed_NRIC" class="persist" type="text" placeholder="e.g. 900101-14-1234">
+    </div>
+    <div class="row">
+      <label style="flex:1">Insured's IC No.
+        <input id="MHSE_Info_InsNIRC" class="persist" type="text" placeholder="e.g. 900101-14-1234">
+      </label>
+    </div>
+
+    <div class="row">
+      <label style="flex:1">Policy Owner's Name
+        <input id="MHSE_Info_InsName" class="persist" type="text" placeholder="Enter name">
+      </label>
+    </div>
+    <div class="row">
+      <label style="flex:1">Policy Owner's Mobile No.
+        <input id="MHSE_Info_POMobile" class="persist" type="text" placeholder="e.g. 012-23456789">
+      </label>
+      <label style="flex:1">Policy Owner's E-mail
+        <input id="MHSE_Info_POEmail" class="persist" type="text" placeholder="e.g. Enter email">
       </label>
     </div>
   </section>
