@@ -591,6 +591,39 @@ async function fillPDF(){
     const pages = pdfDoc.getPages();
     const page = pages[0]; // use first page
 
+    /* ===== RADIO (UI) -> PDF CHECKBOX (fields) MAPPING ===== */
+// helper to map a radio group (saved under groupName) to a list of PDF checkbox field names
+function mapRadioGroupToPdfCheckboxes(groupName, pdfCheckboxNames) {
+  const selectedId = localStorage.getItem(groupName); // e.g. "MHSE_Deductible_1000"
+  // For safety, uncheck all first then check the selected one
+  pdfCheckboxNames.forEach(fieldName => {
+    const shouldCheck = (fieldName === selectedId);
+    safeSetField(form, fieldName, shouldCheck); // safeSetField knows how to check/uncheck
+  });
+}
+
+// Deductible option (UI name: "Deductibletype")
+mapRadioGroupToPdfCheckboxes("Deductibletype", [
+  "MHSE_Deductible_500",
+  "MHSE_Deductible_1000",
+  "MHSE_Deductible_5000",
+  "MHSE_Deductible_10000"
+]);
+
+// Plan option (UI name: "Plantype")
+mapRadioGroupToPdfCheckboxes("Plantype", [
+  "MHSE_Plan_200",
+  "MHSE_Plan_300",
+  "MHSE_Plan_1000"
+]);
+
+// Account type (UI name: "Banktype")
+mapRadioGroupToPdfCheckboxes("Banktype", [
+  "MHSE_EBanking_Islamic",
+  "MHSE_EBanking_Conventional"
+]);
+/* ===== end mapping ===== */
+
  
 
     // FILL FORM FIELDS FROM LOCALSTORAGE HERE
@@ -602,13 +635,6 @@ async function fillPDF(){
   "MHSE_Info_POMobile",
   "MHSE_Info_POEmail",
   "MHSE_TerminateStandalone",
-  "MHSE_Deductible_500", // You need to use the radio button IDs too
-  "MHSE_Deductible_1000",
-  "MHSE_Deductible_5000",
-  "MHSE_Deductible_10000",
-  "MHSE_Plan_200",
-  "MHSE_Plan_300",
-  "MHSE_Plan_1000",
   "MHSE_IncPremium_Check",
   "MHSE_IncPremium_Amount",
   "MHSE_AddRegularTU_Check",
@@ -618,8 +644,6 @@ async function fillPDF(){
   "MHSE_EBanking_NIRC",
   "MHSE_EBanking_BankAcc",
   "MHSE_EBanking_BankName",
-  "MHSE_EBanking_Islamic",
-  "MHSE_EBanking_Conventional",
   "MHSE_Sign_State",
   "MHSE_Sign_Day",
   "MHSE_Sign_Month",
