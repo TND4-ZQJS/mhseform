@@ -382,12 +382,15 @@ function autoBindSave(el) {
       }
     });
   } else {
-    el.addEventListener("input", () => {
-      el.value = el.value.toUpperCase();
-      localStorage.setItem(el.id, el.value);
-      showSaveStatus();
-    });
-  }
+  el.addEventListener("input", () => {
+    let val = el.value;
+    if (el.id !== "MHSE_Info_POEmail") {   // ✅ don’t uppercase email
+      val = val.toUpperCase();
+    }
+    localStorage.setItem(el.id, val);
+    showSaveStatus();
+  });
+}
 }
 
   
