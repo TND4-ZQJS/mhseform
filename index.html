@@ -128,9 +128,9 @@
        <section class="section">
     <label style="flex:1">Plan Option</label>
         <div class="row">
-      <label class="inline"><input name="Plantpye" id="MHSE_Plan_200" type="radio">MHSE Plan 200</label>
-      <label class="inline"><input name="Plantpye" id="MHSE_Plan_300" type="radio">MHSE Plan 300</label>
-      <label class="inline"><input name="Plantpye" id="MHSE_Plan_1000" type="radio">MNHSE Plan 1000</label>
+      <label class="inline"><input name="Plantype" id="MHSE_Plan_200" type="radio">MHSE Plan 200</label>
+      <label class="inline"><input name="Plantype" id="MHSE_Plan_300" type="radio">MHSE Plan 300</label>
+      <label class="inline"><input name="Plantype" id="MHSE_Plan_1000" type="radio">MNHSE Plan 1000</label>
         </div>
     </section>
 
@@ -351,32 +351,43 @@ function saveElValue(el){
   showSaveStatus();
 }
 
-function autoBindSave(el){
-  // Restore saved value
+function autoBindSave(el) {
   const saved = localStorage.getItem(el.id);
-  if(saved !== null){
-    if(el.type === "checkbox" || el.type === "radio"){
-      el.checked = (saved === "true"); // restore as boolean
+  if (saved !== null) {
+    if (el.type === "checkbox") {
+      el.checked = (saved === "true");
+    } else if (el.type === "radio") {
+      // Check if this specific radio button's ID matches the saved value for its group name
+      const savedRadioValue = localStorage.getItem(el.name);
+      el.checked = (el.id === savedRadioValue);
     } else {
-      el.value = saved; // text + dropdown
+      el.value = saved;
     }
   }
 
-  // Bind save
-  if(el.tagName === "SELECT"){  
-    el.addEventListener("change", ()=> saveElValue(el));
-  } else if(el.type === "checkbox" || el.type === "radio"){  
-    el.addEventListener("change", ()=> {
+  // Bind save events
+  if (el.tagName === "SELECT") {
+    el.addEventListener("change", () => saveElValue(el));
+  } else if (el.type === "checkbox") {
+    el.addEventListener("change", () => {
       localStorage.setItem(el.id, el.checked);
       showSaveStatus();
     });
-  } else { // text input
-    el.addEventListener("input", ()=>{
-      el.value = el.value.toUpperCase(); // force uppercase
-      saveElValue(el);
+  } else if (el.type === "radio") {
+    el.addEventListener("change", () => {
+      // Save the ID of the selected radio button under the group's name
+      localStorage.setItem(el.name, el.id);
+      showSaveStatus();
+    });
+  } else {
+    el.addEventListener("input", () => {
+      el.value = el.value.toUpperCase();
+      localStorage.setItem(el.id, el.value);
+      showSaveStatus();
     });
   }
 }
+
   
 /* ---------- UNIVERSAL HELPER FUNCTION ---------- */
 
