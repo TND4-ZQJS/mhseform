@@ -121,7 +121,7 @@
       <label class="inline"><input name="Deductibletype" class="persist" id="MHSE_Deductible_500" type="radio">RM500</label>
       <label class="inline"><input name="Deductibletype" class="persist" id="MHSE_Deductible_1k" type="radio">RM1000</label>
       <label class="inline"><input name="Deductibletype" class="persist" id="MHSE_Deductible_5k" type="radio">RM5000</label>
-      <label class="inline"><input name="Deductibletype" class="persist" id="MHSE_Deductible_10k" type="radio">RM10000</label>
+      <label class="inline"><input name="Deductibletype" class="persist" id="MHSE_Deductible_10k" type="radio">RM10,000</label>
         </div>
     </section>
 
@@ -357,13 +357,17 @@ function autoBindSave(el) {
     if (el.type === "checkbox") {
       el.checked = (saved === "true");
     } else if (el.type === "radio") {
-      // Check if this specific radio button's ID matches the saved value for its group name
-      const savedRadioValue = localStorage.getItem(el.name);
-      el.checked = (el.id === savedRadioValue);
-    } else {
-      el.value = saved;
-    }
+  const savedRadioValue = localStorage.getItem(el.name);
+  if (savedRadioValue) {
+    el.checked = (el.id === savedRadioValue);
   }
+  el.addEventListener("change", () => {
+    if (el.checked) {
+      localStorage.setItem(el.name, el.id); // save under group name
+      showSaveStatus();
+    }
+  });
+}
 
   // Bind save events
   if (el.tagName === "SELECT") {
