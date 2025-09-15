@@ -406,7 +406,12 @@ function safeSetField(form, fieldName, value) {
     // text or textarea, then force Uppercase
     try {
       field = form.getTextField(fieldName);
-      field.setText(value.toUpperCase());
+      // Keep original case for email
+      if (fieldName === "MHSE_Info_POEmail") {
+        field.setText(value);
+      } else {
+        field.setText(value.toUpperCase());
+      }
       return;
     } catch (e) {}
 
