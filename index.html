@@ -118,10 +118,10 @@
     <section class="section">
     <label style="flex:1">Deductible Option</label>
         <div class="row">
-      <label class="inline"><input name="Deductibletype" id="MHSE_Deductible_500" type="radio">RM500</label>
-      <label class="inline"><input name="Deductibletype" id="MHSE_Deductible_1000" type="radio">RM1000</label>
-      <label class="inline"><input name="Deductibletype" id="MHSE_Deductible_5000" type="radio">RM5000</label>
-      <label class="inline"><input name="Deductibletype" id="MHSE_Deductible_10000" type="radio">RM10000</label>
+      <label class="inline"><input name="Deductibletype" class="persist" id="MHSE_Deductible_500" type="radio">RM500</label>
+      <label class="inline"><input name="Deductibletype" class="persist" id="MHSE_Deductible_1000" type="radio">RM1000</label>
+      <label class="inline"><input name="Deductibletype" class="persist" id="MHSE_Deductible_5000" type="radio">RM5000</label>
+      <label class="inline"><input name="Deductibletype" class="persist" id="MHSE_Deductible_10000" type="radio">RM10000</label>
         </div>
     </section>
 
@@ -184,8 +184,8 @@
       <section class="section">
     <label style="flex:1">Account Type</label>
         <div class="row">
-      <label class="inline"><input name="Banktype" id="MHSE_EBanking_Islamic" type="radio">Islamic</label>
-      <label class="inline"><input name="Banktype" id="MHSE_EBanking_Conventional" type="radio">Conventional</label>
+      <label class="inline"><input name="Banktype" class="persist" id="MHSE_EBanking_Islamic" type="radio">Islamic</label>
+      <label class="inline"><input name="Banktype" class="persist" id="MHSE_EBanking_Conventional" type="radio">Conventional</label>
         </div>
     </section>
   </section>
@@ -791,6 +791,8 @@ function resetAll() {
   /* ---------- Wire buttons ---------- */
 $("generate").addEventListener("click", fillPDF);
 $("resetAll").addEventListener("click", resetAll);
+document.querySelectorAll(".persist").forEach(autoBindSave);
+
   
 </script>
 </main> 
