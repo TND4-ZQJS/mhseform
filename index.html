@@ -607,9 +607,6 @@ amendmentField.setText(wrapTextByWordsWithPrefix(val, 60));
   });
     
     /* --------- SIGNATURE IMAGE EMBEDDING (embedPng + drawImage) --------- */
-    const pages = pdfDoc.getPages();
-    const pageIndex = Math.min(3, pages.length - 1); // Page 4 (index 3); adjust if needed
-    const page = pages[pageIndex];
 
 // Owner signature FillPDF
 const sigOwner = localStorage.getItem("sig_owner");
