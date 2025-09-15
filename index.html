@@ -757,14 +757,8 @@ function resetAll() {
     else el.value = "";
   });
 
-  // 3) Rebuild Nominees UI to exactly ONE card (Nominee 1)
-  nomineesContainer.innerHTML = "";
-  nomineeCount = 1;
-  localStorage.setItem("nomineeCount", 1);
-  nomineesContainer.appendChild(createNomineeEntry(1));
-  addNomineeBtn.disabled = false;
 
-  // 4) Reset signature previews
+  // 3) Reset signature previews
   $("preview_owner").innerHTML   = `<span>Tap to Sign (Policy Owner)</span>`;
   $("preview_witness").innerHTML = `<span>Tap to Sign (Witness)</span>`;
   $("preview_trustee").innerHTML = `<span>Tap to Sign (Trustee)</span>`;
