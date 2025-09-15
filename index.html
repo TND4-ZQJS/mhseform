@@ -381,13 +381,12 @@ function autoBindSave(el) {
         showSaveStatus();
       }
     });
-  } else {
+} else {
   el.addEventListener("input", () => {
-    let val = el.value;
-    if (el.id !== "MHSE_Info_POEmail") {   // ✅ don’t uppercase email
-      val = val.toUpperCase();
+    if (el.id !== "MHSE_Info_POEmail") { //except Email
+      el.value = el.value.toUpperCase();   // update textbox itself
     }
-    localStorage.setItem(el.id, val);
+    localStorage.setItem(el.id, el.value);
     showSaveStatus();
   });
 }
