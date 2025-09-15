@@ -599,7 +599,7 @@ async function fillPDF(){
     const form = pdfDoc.getForm();
 
     const pages = pdfDoc.getPages();
-    const page = pages[0]; // use first page
+    const page = pages[1]; // use first page
 
     /* ===== RADIO (UI) -> PDF CHECKBOX (fields) MAPPING ===== */
 // helper to map a radio group (saved under groupName) to a list of PDF checkbox field names
@@ -658,13 +658,13 @@ mapRadioGroupToPdfCheckboxes("Banktype", [
   "MHSE_Sign_Date",
   "MHSE_Sign_Month",
   "MHSE_Sign_Year",
-  "MHSE_Sign_POName", // Corrected Policy Owner Name
-  "MHSE_Sign_PONIRC", // Corrected Policy Owner NRIC
+  "MHSE_Sign_POName", 
+  "MHSE_Sign_PONIRC", 
   "MHSE_Sign_WitnessName",
   "MHSE_Sign_WitnessNIRC",
   "MHSE_Sign_WitnessTel",
-  "MHSE_Sign_TrusteeName", // New ID
-  "MHSE_Sign_TrusteeNIRC" // New ID
+  "MHSE_Sign_TrusteeName",
+  "MHSE_Sign_TrusteeNIRC"
 ].forEach(fieldName => {
   safeSetField(form, fieldName, localStorage.getItem(fieldName));
 });
@@ -687,9 +687,9 @@ if (sigOwner) {
     let drawW = width * scale;
     let drawH = height * scale;
 
-    const factor = 0.40;    // 40% scale
+    const factor = 0.35;    // 40% scale
     const posX = 50;         // X position on PDF
-    const posY = 240;        // Y position on PDF
+    const posY = 180;        // Y position on PDF
 
     drawW *= factor;
     drawH *= factor;
