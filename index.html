@@ -583,23 +583,47 @@ async function fillPDF(){
  
 
     // FILL FORM FIELDS FROM LOCALSTORAGE HERE
-   [
-  "LifeProposed_Name",
-  "PolicyNo",
-  "LifeProposed_NRIC",
-  "Amendment_WriteDetails",
-  "Signed_State",
-  "Signed_Day",
-  "Signed_Month",
-  "Signed_Year",
-  "Sign_LifeProposedPO_Name",
-  "Sign_LifeProposedPO_NRIC",
-  "Sign_LifeProposedPO_Mobile",
-  "Sign_Witness_Name",
-  "Sign_Witness_NRIC"
-  ].forEach(fieldName => {
+[
+  "MHSE_Info_InsName",
+  "MHSE_Info_PolicyNo",
+  "MHSE_Info_InsNIRC",
+  "MHSE_Info_POName",
+  "MHSE_Info_POMobile",
+  "MHSE_Info_POEmail",
+  "MHSE_TerminateStandalone",
+  "MHSE_Deductible_500", // You need to use the radio button IDs too
+  "MHSE_Deductible_1000",
+  "MHSE_Deductible_5000",
+  "MHSE_Deductible_10000",
+  "MHSE_Plan_200",
+  "MHSE_Plan_300",
+  "MHSE_Plan_1000",
+  "MHSE_IncPremium_Check",
+  "MHSE_IncPremium_Amount",
+  "MHSE_AddRegularTU_Check",
+  "MHSE_AddRegularTU_Amount",
+  "MHSE_Ebanking_Check",
+  "MHSE_EBanking_Name",
+  "MHSE_EBanking_NIRC",
+  "MHSE_EBanking_BankAcc",
+  "MHSE_EBanking_BankName",
+  "MHSE_EBanking_Islamic",
+  "MHSE_EBanking_Conventional",
+  "MHSE_Sign_State",
+  "MHSE_Sign_Day",
+  "MHSE_Sign_Month",
+  "MHSE_Sign_Year",
+  "MHSE_Sign_POName", // Corrected Policy Owner Name
+  "MHSE_Sign_PONIRC", // Corrected Policy Owner NRIC
+  "MHSE_Sign_WitnessName",
+  "MHSE_Sign_WitnessNIRC",
+  "MHSE_Sign_WitnessTel",
+  "MHSE_Sign_TrusteeName", // New ID
+  "MHSE_Sign_TrusteeNIRC" // New ID
+].forEach(fieldName => {
   safeSetField(form, fieldName, localStorage.getItem(fieldName));
-  });
+});
+
     
     /* --------- SIGNATURE IMAGE EMBEDDING (embedPng + drawImage) --------- */
 
