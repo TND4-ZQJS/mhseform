@@ -578,13 +578,6 @@ async function fillPDF(){
     const pages = pdfDoc.getPages();
     const page = pages[0]; // use first page
 
-    // Amendment Details - Allow multiple lines in PDF field
-    const amendmentField = form.getTextField("Amendment_WriteDetails");
-    if (amendmentField) {
-    amendmentField.enableMultiline(); // ✅ allow multiple lines in the PDF field
-    const val = localStorage.getItem("Amendment_WriteDetails") || "";
-amendmentField.setText(wrapTextByWordsWithPrefix(val, 60));
-    }
  
 
     // FILL FORM FIELDS FROM LOCALSTORAGE HERE
